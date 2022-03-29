@@ -56,10 +56,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 Err(_) => break,
                 Ok(line) => line,
             };
-            if let Err(_) = stdin_send.send(format!("{}\n", line)) {
+            if let Err(_) = stdin_send.send(Some(format!("{}\n", line))) {
                 break;
             }
         }
+        let _ = stdin_send.send(None);
     });
 
     let stdout_handle = std::thread::spawn(move || {

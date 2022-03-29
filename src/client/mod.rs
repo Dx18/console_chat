@@ -9,7 +9,7 @@ use error::ClientError;
 
 pub async fn run_client<A: ToSocketAddrs>(
     server_addr: A,
-    mut user_input: mpsc::UnboundedReceiver<String>,
+    mut user_input: mpsc::UnboundedReceiver<Option<String>>,
     user_output: mpsc::UnboundedSender<String>,
 ) -> Result<(), ClientError> {
     let mut stream = BufStream::new(TcpStream::connect(server_addr).await?);
@@ -21,7 +21,7 @@ pub async fn run_client<A: ToSocketAddrs>(
                     break;
                 }
             },
-            Some(message) = user_input.recv() => {
+            Some(Some(message)) = user_input.recv() => {
                 stream.write_all(message.as_bytes()).await?;
                 stream.flush().await?;
             }
