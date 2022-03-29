@@ -60,12 +60,13 @@ impl Server {
         client: &mut ConnectedClient,
         other_client: &mut ConnectedClient,
         message: &str,
-        chat_history: &[(String, String)],
+        chat_history: &mut Vec<(String, String)>,
     ) -> Result<(), ServerError> {
         match client.nickname.as_ref() {
             Some(nickname) => {
                 let result_message = format!("{}: {}", nickname, message);
 
+                chat_history.push((nickname.to_string(), message.to_string()));
                 client.write_line(&result_message).await?;
                 other_client.write_line(&result_message).await?;
             }
@@ -112,13 +113,13 @@ impl Server {
             if let Some(&mut [ref mut client0, ref mut client1]) = self.clients.as_mut() {
                 tokio::select! {
                     Ok(Some(message)) = client0.read_line() => {
-                        if let Err(_) = Server::handle_client_message(client0, client1, &message, &self.chat_history).await {
+                        if let Err(_) = Server::handle_client_message(client0, client1, &message, &mut self.chat_history).await {
                             let _ = client1.write_line("Other client disconnected. Stopping...");
                             break
                         }
                     }
                     Ok(Some(message)) = client1.read_line() => {
-                        if let Err(_) = Server::handle_client_message(client1, client0, &message, &self.chat_history).await {
+                        if let Err(_) = Server::handle_client_message(client1, client0, &message, &mut self.chat_history).await {
                             let _= client0.write_line("Other client disconnected. Stopping...");
                             break
                         }
